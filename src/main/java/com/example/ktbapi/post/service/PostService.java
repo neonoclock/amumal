@@ -1,8 +1,8 @@
 package com.example.ktbapi.post.service;
 
-import com.example.ktbapi.post.dto.CommentCreateOrUpdateRequest;
-import com.example.ktbapi.post.dto.PostCreateRequest;
-import com.example.ktbapi.post.dto.PostUpdateRequest;
+import com.example.ktbapi.common.TimeUtil;
+import com.example.ktbapi.post.dto.*;
+import com.example.ktbapi.post.mapper.PostMapper;
 import com.example.ktbapi.post.model.Comment;
 import com.example.ktbapi.post.model.Post;
 import com.example.ktbapi.post.repo.CommentRepository;
@@ -12,7 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 public class PostService {
@@ -26,8 +27,8 @@ public class PostService {
     this.likeRepo = likeRepo;
   }
 
-  // 게시글 목록 
-  public List<Map<String, Object>> getAllPosts(int page, int limit, String sort) {
+  // ===== 게시글 목록 (Map -> DTO) =====
+  public List<PostSummaryResponse> getAllPosts(int page, int limit, String sort) {
     List<Post> posts = postRepo.findAll();
     if ("date".equalsIgnoreCase(sort)) Collections.reverse(posts);
 
@@ -35,78 +36,41 @@ public class PostService {
     int end = Math.min(start + limit, posts.size());
     List<Post> paged = posts.subList(start, end);
 
-    List<Map<String, Object>> result = new ArrayList<>();
-    for (Post p : paged) {
-      Map<String, Object> m = new LinkedHashMap<>();
-      m.put("post_id", p.getId());
-      m.put("title", p.getTitle());
-      m.put("author", p.getAuthor());
-      m.put("created_at", p.getCreatedAt());
-      m.put("views", p.getViews());
-      m.put("likes", p.getLikes());
-      result.add(m);
-    }
-    return result;
+    return paged.stream().map(PostMapper::toSummary).toList();
   }
 
-  // 게시글 상세 조회
-  public Map<String, Object> getPostById(Long id) {
+  // ===== 게시글 상세 (조회수 +1) (Map -> DTO) =====
+  public PostDetailResponse getPostById(Long id) {
     Post post = postRepo.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "post_not_found"));
 
-    Post updated = new Post(post.getId(), post.getTitle(), post.getContent(), post.getAuthor(),
-        post.getImageUrl(), post.getCreatedAt(), post.getViews() + 1, post.getLikes());
+    Post updated = new Post(
+        post.getId(), post.getTitle(), post.getContent(), post.getAuthor(),
+        post.getImageUrl(), post.getCreatedAt(), post.getViews() + 1, post.getLikes()
+    );
     postRepo.save(updated);
 
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("post_id", updated.getId());
-    result.put("title", updated.getTitle());
-    result.put("content", updated.getContent());
-    result.put("author", updated.getAuthor());
-    result.put("image_url", updated.getImageUrl());
-    result.put("created_at", updated.getCreatedAt());
-    result.put("views", updated.getViews());
-    result.put("likes", updated.getLikes());
-
-    List<Map<String, Object>> comments = new ArrayList<>();
-    for (Comment c : commentRepo.findAllByPostId(id)) {
-      Map<String, Object> cm = new LinkedHashMap<>();
-      cm.put("comment_id", c.getId());
-      cm.put("author", c.getAuthor());
-      cm.put("content", c.getContent());
-      cm.put("created_at", c.getCreatedAt());
-      comments.add(cm);
-    }
-    result.put("comments", comments);
-
-    return result;
+    List<Comment> comments = commentRepo.findAllByPostId(id);
+    return PostMapper.toDetail(updated, comments);
   }
 
-  // 게시글 생성
-  public Map<String, Object> createPost(Long userId, String authorName, PostCreateRequest req) {
+  // ===== 게시글 생성 (Map -> DTO) =====
+  public PostDetailResponse createPost(Long userId, String authorName, PostCreateRequest req) {
     if (req == null || req.title == null || req.content == null)
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_request");
     if (userId == null)
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
 
-    String now = java.time.LocalDateTime.now().withNano(0).toString().replace('T', ' ');
-    Post newPost = new Post(null, req.title, req.content, authorName, req.image_url, now, 0, 0);
-    Post saved = postRepo.save(newPost);
-
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("post_id", saved.getId());
-    result.put("title", saved.getTitle());
-    result.put("content", saved.getContent());
-    result.put("author", saved.getAuthor());
-    result.put("image_url", saved.getImageUrl());
-    result.put("created_at", saved.getCreatedAt());
-    result.put("views", saved.getViews());
-    result.put("likes", saved.getLikes());
-    return result;
+    String now = TimeUtil.nowText();
+    Post saved = postRepo.save(new Post(
+        null, req.title, req.content, authorName, req.image_url, now, 0, 0
+    ));
+    // 생성 시점엔 댓글 없음
+    return PostMapper.toDetail(saved, List.of());
   }
 
-  // 게시글 수정
-  public Map<String, Object> updatePost(Long userId, Long postId, PostUpdateRequest req) {
+  // ===== 게시글 수정 (Map -> DTO) =====
+  public PostUpdatedResponse updatePost(Long userId, Long postId, PostUpdateRequest req) {
     if (userId == null)
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
     if (req == null || req.title == null || req.content == null)
@@ -127,17 +91,14 @@ public class PostService {
     );
     postRepo.save(patched);
 
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("post_id", patched.getId());
-    result.put("title", patched.getTitle());
-    result.put("content", patched.getContent());
-    result.put("image_url", patched.getImageUrl());
-    result.put("updated_at", java.time.LocalDateTime.now().withNano(0).toString().replace('T',' '));
-    return result;
+    return new PostUpdatedResponse(
+        patched.getId(), patched.getTitle(), patched.getContent(),
+        patched.getImageUrl(), TimeUtil.nowText()
+    );
   }
 
-  // 댓글 생성
-  public Map<String, Object> createComment(Long userId, Long postId, String authorName, CommentCreateOrUpdateRequest req) {
+  // ===== 댓글 생성 (Map -> DTO) =====
+  public CommentResponse createComment(Long userId, Long postId, String authorName, CommentCreateOrUpdateRequest req) {
     if (userId == null)
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
     if (req == null || req.content == null)
@@ -146,20 +107,14 @@ public class PostService {
     postRepo.findById(postId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "post_not_found"));
 
-    String now = java.time.LocalDateTime.now().withNano(0).toString().replace('T', ' ');
+    String now = TimeUtil.nowText();
     Comment saved = commentRepo.addComment(postId, new Comment(null, authorName, req.content, now));
 
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("comment_id", saved.getId());
-    result.put("post_id", postId);
-    result.put("author", saved.getAuthor());
-    result.put("content", saved.getContent());
-    result.put("created_at", saved.getCreatedAt());
-    return result;
+    return new CommentResponse(saved.getId(), postId, saved.getAuthor(), saved.getContent(), saved.getCreatedAt());
   }
 
-  // ===== 댓글 수정 =====
-  public Map<String, Object> updateComment(Long userId, Long postId, Long commentId, CommentCreateOrUpdateRequest req) {
+  // ===== 댓글 수정 (Map -> DTO) =====
+  public CommentUpdatedResponse updateComment(Long userId, Long postId, Long commentId, CommentCreateOrUpdateRequest req) {
     if (userId == null)
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
     if (req == null || req.content == null)
@@ -171,14 +126,10 @@ public class PostService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "comment_not_found"));
 
     c.setContent(req.content);
-
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("comment_id", c.getId());
-    result.put("updated_at", java.time.LocalDateTime.now().withNano(0).toString().replace('T',' '));
-    return result;
+    return new CommentUpdatedResponse(c.getId(), TimeUtil.nowText());
   }
 
-  // 댓글 삭제
+  // ===== 댓글 삭제 =====
   public void deleteComment(Long userId, Long postId, Long commentId) {
     if (userId == null)
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
@@ -190,8 +141,8 @@ public class PostService {
     if (!ok) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "comment_not_found");
   }
 
-  // 좋아요 추가
-  public Map<String, Object> addLike(Long userId, Long postId) {
+  // ===== 좋아요 추가 (Map -> DTO) =====
+  public LikeCountResponse addLike(Long userId, Long postId) {
     if (userId == null)
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
 
@@ -202,18 +153,18 @@ public class PostService {
     if (!added)
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "already_liked");
 
-    Post updated = new Post(post.getId(), post.getTitle(), post.getContent(), post.getAuthor(),
-        post.getImageUrl(), post.getCreatedAt(), post.getViews(), post.getLikes() + 1);
+    Post updated = new Post(
+        post.getId(), post.getTitle(), post.getContent(), post.getAuthor(),
+        post.getImageUrl(), post.getCreatedAt(), post.getViews(), post.getLikes() + 1
+    );
     postRepo.save(updated);
 
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("post_id", postId);
-    result.put("likes_count", likeRepo.countLikes(postId));
-    return result;
+    long count = likeRepo.countLikes(postId);
+    return new LikeCountResponse(postId, count);
   }
 
-  // 좋아요 취소
-  public Map<String, Object> removeLike(Long userId, Long postId) {
+  // ===== 좋아요 취소 (Map -> DTO) =====
+  public LikeCountResponse removeLike(Long userId, Long postId) {
     if (userId == null)
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
 
@@ -224,28 +175,23 @@ public class PostService {
     if (!removed)
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "not_liked");
 
-    Post updated = new Post(post.getId(), post.getTitle(), post.getContent(), post.getAuthor(),
-        post.getImageUrl(), post.getCreatedAt(), post.getViews(), post.getLikes() - 1);
+    Post updated = new Post(
+        post.getId(), post.getTitle(), post.getContent(), post.getAuthor(),
+        post.getImageUrl(), post.getCreatedAt(), post.getViews(), post.getLikes() - 1
+    );
     postRepo.save(updated);
 
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("post_id", postId);
-    result.put("likes_count", likeRepo.countLikes(postId));
-    return result;
+    long count = likeRepo.countLikes(postId);
+    return new LikeCountResponse(postId, count);
   }
 
-  // 좋아요 조회
-  public Map<String, Object> getLikes(Long postId, Long userId) {
+  // ===== 좋아요 조회 (Map -> DTO) =====
+  public LikeStatusResponse getLikes(Long postId, Long userId) {
     postRepo.findById(postId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "post_not_found"));
 
     long count = likeRepo.countLikes(postId);
     boolean liked = (userId != null) && likeRepo.hasLiked(userId, postId);
-
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("post_id", postId);
-    result.put("likes_count", count);
-    result.put("liked_by_me", liked);
-    return result;
+    return new LikeStatusResponse(postId, count, liked);
   }
 }
