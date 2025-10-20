@@ -5,7 +5,7 @@ import java.util.Objects;
 public class Comment {
     private final Long id;
     private final String author;
-    private String content;        // ← 외부 세터 제거, 도메인 메서드로만 변경
+    private String content;
     private final String createdAt;
 
     public Comment(Long id, String author, String content, String createdAt) {
@@ -18,8 +18,7 @@ public class Comment {
         this.content = content;
         this.createdAt = createdAt;
     }
-
-    // ===== 도메인 동작(행위) =====
+    
     public void updateContent(String newContent) {
         if (newContent == null || newContent.isBlank()) {
             throw new IllegalArgumentException("content required");
@@ -27,13 +26,11 @@ public class Comment {
         this.content = newContent;
     }
 
-    // ===== 접근자 =====
     public Long getId() { return id; }
     public String getAuthor() { return author; }
     public String getContent() { return content; }
     public String getCreatedAt() { return createdAt; }
 
-    // 동일성: id 기준
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

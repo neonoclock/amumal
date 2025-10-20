@@ -1,6 +1,7 @@
 package com.example.ktbapi.user.controller;
 
 import com.example.ktbapi.common.ApiResponse;
+import com.example.ktbapi.common.Msg;
 import com.example.ktbapi.user.dto.*;
 import com.example.ktbapi.user.service.UserService;
 import jakarta.validation.Valid;
@@ -17,26 +18,26 @@ public class UserController {
   @PostMapping("/login")
   public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody LoginRequest req){
     var data = service.login(req);
-    return ResponseEntity.ok(ApiResponse.ok("login_success", data));
+    return ResponseEntity.ok(ApiResponse.ok(Msg.Success.LOGIN, data));
   }
 
   @PostMapping("/signup")
   public ResponseEntity<ApiResponse<Void>> signup(@Valid @RequestBody SignupRequest req){
     service.signup(req);
-    return ResponseEntity.status(201).body(ApiResponse.ok("signup_success", null));
+    return ResponseEntity.status(201).body(ApiResponse.ok(Msg.Success.SIGNUP, null));
   }
 
   @PatchMapping("/me")
   public ResponseEntity<ApiResponse<Void>> updateProfile(@RequestHeader("X-User-Id") Long userId,
                                                          @Valid @RequestBody ProfileUpdateRequest req){
     service.updateProfile(userId, req);
-    return ResponseEntity.ok(ApiResponse.ok("profile_update_success", null));
+    return ResponseEntity.ok(ApiResponse.ok(Msg.Success.PROFILE_UPDATE, null));
   }
 
   @PatchMapping("/me/password")
   public ResponseEntity<ApiResponse<Void>> updatePassword(@RequestHeader("X-User-Id") Long userId,
                                                           @Valid @RequestBody PasswordUpdateRequest req){
     service.updatePassword(userId, req);
-    return ResponseEntity.ok(ApiResponse.ok("password_update_success", null));
+    return ResponseEntity.ok(ApiResponse.ok(Msg.Success.PASSWORD_UPDATE, null));
   }
 }

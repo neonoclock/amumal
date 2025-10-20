@@ -7,7 +7,6 @@ import java.util.*;
 
 @Repository
 public class CommentRepository {
-  // postId -> comments
   private final Map<Long, List<Comment>> store = new HashMap<>();
   private long seq = 0L;
 

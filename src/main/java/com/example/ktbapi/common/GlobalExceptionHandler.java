@@ -1,52 +1,66 @@
 package com.example.ktbapi.common;
 
-import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
+import com.example.ktbapi.common.exception.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import static com.example.ktbapi.common.Msg.Error;
 
 @RestControllerAdvice
-@Slf4j
 public class GlobalExceptionHandler {
 
-    private Map<String, Object> body(String message, Object data) {
-        return Map.of("message", message, "data", data);
+    private static ResponseEntity<ApiResponse<?>> build(HttpStatus status, String code, Object detail) {
+        return ResponseEntity.status(status).body(ApiResponse.ok(code, detail));
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handlePostNotFound(PostNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, Error.POST_NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(CommentNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleCommentNotFound(CommentNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, Error.COMMENT_NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidRequest(InvalidRequestException ex) {
+        return build(HttpStatus.BAD_REQUEST, Error.INVALID_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResponse<?>> handleUnauthorized(UnauthorizedException ex) {
+        return build(HttpStatus.UNAUTHORIZED, Error.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(AlreadyLikedException.class)
+    public ResponseEntity<ApiResponse<?>> handleAlreadyLiked(AlreadyLikedException ex) {
+        return build(HttpStatus.BAD_REQUEST, Error.ALREADY_LIKED, ex.getMessage());
+    }
+
+    @ExceptionHandler(NotLikedException.class)
+    public ResponseEntity<ApiResponse<?>> handleNotLiked(NotLikedException ex) {
+        return build(HttpStatus.BAD_REQUEST, Error.NOT_LIKED, ex.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, Object> handleValidation(MethodArgumentNotValidException ex) {
-        String errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(f -> f.getField() + ": " + f.getDefaultMessage())
-                .collect(Collectors.joining(", "));
-        return body("invalid_request", errors);
+    public ResponseEntity<ApiResponse<?>> handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
+            errors.put(fe.getField(), fe.getDefaultMessage());
+        }
+        return build(HttpStatus.BAD_REQUEST, Error.INVALID_REQUEST, errors);
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(ConstraintViolationException.class)
-    public Map<String, Object> handleConstraint(ConstraintViolationException ex) {
-        return body("invalid_request", ex.getMessage());
-    }
-
-    // 서비스에서 ResponseStatusException을 던진 경우 (상태/사유 보존)
-    @ExceptionHandler(ResponseStatusException.class)
-    public Map<String, Object> handleRSE(ResponseStatusException ex) {
-        log.error("ResponseStatusException: {}", ex.getReason(), ex);
-        // 상태코드는 예외에 들어있으므로 그대로 반영됨
-        return body(ex.getReason() != null ? ex.getReason() : "error", null);
-    }
-
-    // 마지막 방파제: 예측 못한 모든 예외
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Exception.class)
-    public Map<String, Object> handleUnknown(Exception ex) {
-        log.error("Unexpected error", ex); // 콘솔에 전체 스택트레이스
-        // 로컬 디버깅이라 메시지를 응답에 포함 (운영에선 null 권장)
-        return body("internal_server_error", ex.getMessage());
+    public ResponseEntity<ApiResponse<?>> handleOthers(Exception ex) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, Error.INTERNAL_ERROR, ex.getMessage());
     }
 }

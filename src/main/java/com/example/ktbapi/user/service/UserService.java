@@ -1,5 +1,6 @@
 package com.example.ktbapi.user.service;
 
+import com.example.ktbapi.common.TimeUtil;
 import com.example.ktbapi.user.dto.LoginRequest;
 import com.example.ktbapi.user.dto.PasswordUpdateRequest;
 import com.example.ktbapi.user.dto.ProfileUpdateRequest;
@@ -19,7 +20,6 @@ public class UserService {
   public UserService(UserRepository repo){ this.repo = repo; }
 
   public Map<String, Object> login(LoginRequest req){
-    // @Valid 로 이메일/비번 형식 검증됨
     User u = repo.findByEmail(req.email)
         .filter(x -> x.getPassword().equals(req.password))
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized"));
@@ -34,20 +34,15 @@ public class UserService {
   }
 
   public Long signup(SignupRequest req) {
-    // @Valid 로 이메일/비번/닉네임/비번일치 검증됨
     User saved = repo.save(new User(
-        null,
-        req.email,
-        req.password,
-        req.nickname,
-        java.time.LocalDateTime.now().withNano(0).toString().replace('T',' ')
+        null, req.email, req.password, req.nickname, TimeUtil.nowText() // ✅ 변경
     ));
     return saved.getId();
   }
 
   public void updateProfile(Long userId, ProfileUpdateRequest req) {
-    // @Valid 로 닉네임 형식 검증됨
-    if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
+    if (userId == null)
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
 
     User u = repo.findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user_not_found"));
@@ -57,8 +52,8 @@ public class UserService {
   }
 
   public void updatePassword(Long userId, PasswordUpdateRequest req) {
-    // @Valid 로 새 비밀번호 형식/일치 검증됨
-    if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
+    if (userId == null)
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
 
     User u = repo.findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user_not_found"));
