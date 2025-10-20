@@ -12,6 +12,7 @@ public final class PostMapper {
     private PostMapper() {}
 
     public static PostSummaryResponse toSummary(Post p) {
+        if (p == null) return null;
         return new PostSummaryResponse(
                 p.getId(), p.getTitle(), p.getAuthor(),
                 p.getCreatedAt(), p.getViews(), p.getLikes()
@@ -19,6 +20,7 @@ public final class PostMapper {
     }
 
     public static PostDetailResponse toDetail(Post p, List<Comment> comments) {
+        if (p == null) return null;
         List<CommentResponse> cmts = comments.stream()
                 .map(c -> new CommentResponse(c.getId(), p.getId(), c.getAuthor(), c.getContent(), c.getCreatedAt()))
                 .toList();

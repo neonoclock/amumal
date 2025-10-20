@@ -1,34 +1,64 @@
 package com.example.ktbapi.user.model;
 
+import java.util.Objects;
+
 public class User {
-  private Long id;
-  private String email;
-  private String password;
-  private String nickname;
-  private String profileImage;
+    private final Long id;
+    private final String email;
+    private String password;     // 변경은 도메인 메서드로만
+    private String nickname;     // 변경은 도메인 메서드로만
+    private final String createdAt;
 
-  // 기본 생성자
-  public User(Long id, String email, String password, String nickname) {
-    this(id, email, password, nickname, null);
-  }
+    public User(Long id, String email, String password, String nickname, String createdAt) {
+        if (email == null || email.isBlank()) throw new IllegalArgumentException("email required");
+        if (password == null || password.isBlank()) throw new IllegalArgumentException("password required");
+        if (nickname == null || nickname.isBlank()) throw new IllegalArgumentException("nickname required");
+        if (createdAt == null || createdAt.isBlank()) throw new IllegalArgumentException("createdAt required");
 
-  // 모든 필드를 초기화하는 생성자
-  public User(Long id, String email, String password, String nickname, String profileImage) {
-    this.id = id;
-    this.email = email;
-    this.password = password;
-    this.nickname = nickname;
-    this.profileImage = profileImage;
-  }
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.createdAt = createdAt;
+    }
 
-  // Getter 메서드
-  public Long getId(){ return id; }
-  public String getEmail(){ return email; }
-  public String getPassword(){ return password; }
-  public String getNickname(){ return nickname; }
-  public String getProfileImage(){ return profileImage; }
+    // ===== 도메인 동작(행위) =====
+    public void changeNickname(String newNickname) {
+        if (newNickname == null || newNickname.isBlank()) {
+            throw new IllegalArgumentException("nickname required");
+        }
+        this.nickname = newNickname;
+    }
 
-  // Setter 메서드
-  public void setNickname(String nickname){ this.nickname = nickname; }
-  public void setProfileImage(String profileImage){ this.profileImage = profileImage; }
+    public void changePassword(String newPassword) {
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new IllegalArgumentException("password required");
+        }
+        // 필요 시 정책(길이/해시) 적용
+        this.password = newPassword;
+    }
+
+    // ===== 접근자 =====
+    public Long getId() { return id; }
+    public String getEmail() { return email; }
+    public String getPassword() { return password; }
+    public String getNickname() { return nickname; }
+    public String getCreatedAt() { return createdAt; }
+
+    // 동일성: id 기준
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+        User that = (User) o;
+        return Objects.equals(id, that.id);
+    }
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+    @Override
+    public String toString() {
+        return "User{id=" + id + ", email='" + email + "', nickname='" + nickname + "'}";
+    }
 }
