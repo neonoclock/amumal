@@ -2,8 +2,11 @@ package com.example.ktbapi.post.controller;
 
 import com.example.ktbapi.common.ApiResponse;
 import com.example.ktbapi.common.Msg;
-import com.example.ktbapi.post.dto.*;
-import com.example.ktbapi.post.service.CommentService;
+import com.example.ktbapi.post.dto.PostCreateRequest;
+import com.example.ktbapi.post.dto.PostDetailResponse;
+import com.example.ktbapi.post.dto.PostSummaryResponse;
+import com.example.ktbapi.post.dto.PostUpdateRequest;
+import com.example.ktbapi.post.dto.PostUpdatedResponse;
 import com.example.ktbapi.post.service.PostService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +18,9 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
-    private final CommentService commentService;
 
-    public PostController(PostService postService, CommentService commentService) {
+    public PostController(PostService postService) {
         this.postService = postService;
-        this.commentService = commentService;
     }
 
     @GetMapping
@@ -50,23 +51,5 @@ public class PostController {
                                  @Valid @RequestBody PostUpdateRequest req) {
         PostUpdatedResponse data = postService.updatePost(userId, id, req);
         return ApiResponse.ok(Msg.Success.POST_UPDATE, data);
-    }
-
-    @PostMapping("/{postId}/comments")
-    public ApiResponse<?> createComment(@RequestHeader(value = "X-USER-ID", required = false) Long userId,
-                                        @RequestHeader(value = "X-USER-NAME", required = false) String authorName,
-                                        @PathVariable Long postId,
-                                        @Valid @RequestBody CommentCreateOrUpdateRequest req) {
-        CommentResponse data = commentService.create(userId, postId, authorName, req);
-        return ApiResponse.ok(Msg.Success.COMMENT_CREATE, data);
-    }
-
-    @PatchMapping("/{postId}/comments/{commentId}")
-    public ApiResponse<?> updateComment(@RequestHeader(value = "X-USER-ID", required = false) Long userId,
-                                        @PathVariable Long postId,
-                                        @PathVariable Long commentId,
-                                        @Valid @RequestBody CommentCreateOrUpdateRequest req) {
-        CommentUpdatedResponse data = commentService.update(userId, postId, commentId, req);
-        return ApiResponse.ok(Msg.Success.COMMENT_UPDATE, data);
     }
 }

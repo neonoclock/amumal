@@ -9,16 +9,19 @@ public class Comment {
     private final String createdAt;
 
     public Comment(Long id, String author, String content, String createdAt) {
-        if (author == null || author.isBlank()) throw new IllegalArgumentException("author required");
-        if (content == null || content.isBlank()) throw new IllegalArgumentException("content required");
-        if (createdAt == null || createdAt.isBlank()) throw new IllegalArgumentException("createdAt required");
+        if (author == null || author.isBlank())
+            throw new IllegalArgumentException("author required");
+        if (content == null || content.isBlank())
+            throw new IllegalArgumentException("content required");
+        if (createdAt == null || createdAt.isBlank())
+            throw new IllegalArgumentException("createdAt required");
 
         this.id = id;
         this.author = author;
         this.content = content;
         this.createdAt = createdAt;
     }
-    
+
     public void updateContent(String newContent) {
         if (newContent == null || newContent.isBlank()) {
             throw new IllegalArgumentException("content required");
@@ -38,10 +41,10 @@ public class Comment {
         Comment that = (Comment) o;
         return Objects.equals(id, that.id);
     }
+
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    public int hashCode() { return Objects.hash(id); }
+
     @Override
     public String toString() {
         return "Comment{id=" + id + ", author='" + author + "', createdAt='" + createdAt + "'}";
