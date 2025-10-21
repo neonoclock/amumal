@@ -1,28 +1,23 @@
+
 package com.example.ktbapi.common;
 
-public class ApiResponse<T>{          
-  private final String message;
-  private final T data;
+public class ApiResponse<T> {
+    private final String message;
+    private final T data;
 
-  private ApiResponse(String m, T d){
-    this.message = m;
-    this.data = d;
-  }
+    public ApiResponse(String message, T data) {
+        this.message = message;
+        this.data = data;
+    }
 
-  public static <T> ApiResponse<T> ok(String m, T d){
-    return new ApiResponse<>(m, d);
-  }
+    public String getMessage() { return message; }
+    public T getData() { return data; }
 
-  public static <T> ApiResponse<T> fail(String m){
-    return new ApiResponse<>(m, null);
-  }
+    public static <T> ApiResponse<T> ok(String message, T data) {
+        return new ApiResponse<>(message, data);
+    }
 
-  public String getMessage(){
-    return message;
-  }
-
-  public T getData(){
-    return data;
-  }
-  
+    public static <T> ApiResponse<T> error(String message, T data) {
+        return new ApiResponse<>(message, data);
+    }
 }
