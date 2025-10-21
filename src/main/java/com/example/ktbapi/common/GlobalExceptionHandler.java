@@ -1,5 +1,7 @@
 package com.example.ktbapi.common;
 
+import com.example.ktbapi.common.exception.NotFoundException;
+import com.example.ktbapi.common.exception.UnauthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -30,7 +32,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(ApiResponse.error(code, detail));
     }
 
-    // 400
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResponse<?>> handleUnauthorized(UnauthorizedException ex) {
+        String code = ex.getMessage() != null ? ex.getMessage() : "unauthorized";
+        return build(HttpStatus.UNAUTHORIZED, code, null);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleNotFound(NotFoundException ex) {
+        String code = ex.getMessage() != null ? ex.getMessage() : "not_found";
+        return build(HttpStatus.NOT_FOUND, code, null);
+    }
+
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<?>> handleValidation(MethodArgumentNotValidException ex) {
         log.debug("❌ Validation error: {}", ex.getMessage());
@@ -63,7 +78,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "type_mismatch", detail);
     }
 
-    // 404
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleNoHandler(NoHandlerFoundException ex) {
         log.info("⚠️ No handler found: {} {}", ex.getHttpMethod(), ex.getRequestURL());
@@ -84,7 +98,6 @@ public class GlobalExceptionHandler {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-
         log.info("⚠️ Resource not found: {} {}", ex.getHttpMethod(), path);
         Map<String, Object> detail = Map.of(
                 "path", path,
@@ -93,7 +106,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, "not_found", detail);
     }
 
-    //405
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<?>> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
         log.debug("❌ Method not allowed: {}, supported={}", ex.getMethod(), ex.getSupportedHttpMethods());
@@ -104,7 +116,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.METHOD_NOT_ALLOWED, "method_not_allowed", detail);
     }
 
-    // 406
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<ApiResponse<?>> handleNotAcceptable(HttpMediaTypeNotAcceptableException ex) {
         log.debug("❌ Media type not acceptable: {}", ex.getMessage());
