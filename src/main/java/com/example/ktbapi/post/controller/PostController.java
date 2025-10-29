@@ -11,6 +11,11 @@ import com.example.ktbapi.post.service.PostService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+
 import java.util.List;
 
 @RestController
@@ -24,12 +29,35 @@ public class PostController {
     }
 
     @GetMapping
-    public ApiResponse<?> list(@RequestParam(defaultValue = "1") int page,
-                               @RequestParam(defaultValue = "10") int limit,
-                               @RequestParam(defaultValue = "date") String sort) {
+    public ApiResponse<?> list(
+            @Parameter(
+                    name = "page",
+                    description = "페이지 번호 (기본값: 1)",
+                    in = ParameterIn.QUERY,
+                    schema = @Schema(defaultValue = "1")
+            )
+            @RequestParam(defaultValue = "1") int page,
+
+            @Parameter(
+                    name = "limit",
+                    description = "한 페이지당 게시글 수 (기본값: 10)",
+                    in = ParameterIn.QUERY,
+                    schema = @Schema(defaultValue = "10")
+            )
+            @RequestParam(defaultValue = "10") int limit,
+
+            @Parameter(
+                    name = "sort",
+                    description = "정렬 기준: `date`(최신순), `likes`(좋아요순), `views`(조회수순)",
+                    in = ParameterIn.QUERY,
+                    schema = @Schema(defaultValue = "date", allowableValues = {"date", "likes", "views"})
+            )
+            @RequestParam(defaultValue = "date") String sort
+    ) {
         List<PostSummaryResponse> data = postService.getAllPosts(page, limit, sort);
         return ApiResponse.ok(Msg.Success.POSTS_FETCH, data);
     }
+
 
     @GetMapping("/{id}")
     public ApiResponse<?> get(@PathVariable Long id) {

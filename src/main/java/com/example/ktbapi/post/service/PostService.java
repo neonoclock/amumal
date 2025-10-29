@@ -14,7 +14,6 @@ import com.example.ktbapi.post.repo.CommentRepository;
 import com.example.ktbapi.post.repo.PostRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -30,7 +29,8 @@ public class PostService {
 
     public List<PostSummaryResponse> getAllPosts(int page, int limit, String sort) {
         List<Post> posts = postRepo.findAll();
-        if ("date".equalsIgnoreCase(sort)) Collections.reverse(posts);
+        
+        posts.sort(PostSort.resolve(sort));
 
         int start = Math.max(0, (page - 1) * limit);
         int end = Math.min(start + limit, posts.size());
