@@ -22,6 +22,10 @@ public class Post {
         this.likes = likes;
     }
 
+    public void increaseViews() {
+        this.views += 1;
+    }
+
     public Long getId() { return id; }
     public String getTitle() { return title; }
     public String getContent() { return content; }

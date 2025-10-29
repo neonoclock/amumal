@@ -18,6 +18,14 @@ public class PostRepository {
     return post;
   }
 
+  public synchronized Optional<Post> increaseViewsById(Long id) {
+    Post p = store.get(id);
+    if (p == null) return Optional.empty();
+    p.increaseViews();
+    store.put(id, p);
+    return Optional.of(p);
+  }
+
   public List<Post> findAll() {
     return new ArrayList<>(store.values());
   }

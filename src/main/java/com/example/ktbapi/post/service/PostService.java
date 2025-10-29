@@ -43,23 +43,12 @@ public class PostService {
 
 
     public PostDetailResponse getPostById(Long id) {
-        Post post = postRepo.findById(id)
-                .orElseThrow(() -> new PostNotFoundException(id));
+    Post post = postRepo.increaseViewsById(id)
+            .orElseThrow(() -> new PostNotFoundException(id));
 
-        Post updated = new Post(
-                post.getId(),
-                post.getTitle(),
-                post.getContent(),
-                post.getAuthor(),
-                post.getImageUrl(),
-                post.getCreatedAt(),
-                post.getViews() + 1,
-                post.getLikes()
-        );
-        postRepo.save(updated);
+    return PostMapper.toDetail(post, commentRepo.findAllByPostId(id));
+}
 
-        return PostMapper.toDetail(updated, commentRepo.findAllByPostId(id));
-    }
 
     public PostDetailResponse createPost(Long userId, String authorName, PostCreateRequest req) {
         if (userId == null) throw new UnauthorizedException();
