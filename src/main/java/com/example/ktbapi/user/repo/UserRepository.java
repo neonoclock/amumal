@@ -20,32 +20,31 @@ public class UserRepository {
     return u;
   }
 
-  public Optional<User> findByEmail(String email){
+  public synchronized Optional<User> findByEmail(String email){
     return store.values().stream()
         .filter(u -> u.getEmail().equalsIgnoreCase(email))
         .findFirst();
   }
 
-  // ID로 사용자 찾기
-  public Optional<User> findById(Long id){
+  public synchronized Optional<User> findById(Long id){
     return Optional.ofNullable(store.get(id));
   }
 
-  // 저장소가 비어있는지 확인
-  public boolean isEmpty(){ return store.isEmpty(); }
+  public synchronized boolean isEmpty(){ return store.isEmpty(); }
 
-  // 이메일 또는 닉네임 중복 확인
-  public boolean existsByEmailOrNickname(String email, String nickname){
+  public synchronized boolean existsByEmailOrNickname(String email, String nickname){
     return store.values().stream().anyMatch(u ->
         u.getEmail().equalsIgnoreCase(email) || u.getNickname().equalsIgnoreCase(nickname)
     );
   }
 
-  // 특정 ID를 제외한 닉네임 중복 확인
-  public boolean existsByNicknameExceptId(String nickname, Long exceptId){
+  public synchronized boolean existsByNicknameExceptId(String nickname, Long exceptId){
     return store.values().stream().anyMatch(u ->
         !u.getId().equals(exceptId) && u.getNickname().equalsIgnoreCase(nickname)
     );
   }
-}
 
+  public synchronized void deleteById(Long userId) {
+    store.remove(userId);
+  }
+}

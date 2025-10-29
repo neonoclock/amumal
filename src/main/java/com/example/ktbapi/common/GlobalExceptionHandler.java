@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import com.example.ktbapi.common.exception.InvalidRequestException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -121,4 +122,18 @@ public class GlobalExceptionHandler {
         log.debug("❌ Media type not acceptable: {}", ex.getMessage());
         return build(HttpStatus.NOT_ACCEPTABLE, "not_acceptable", ex.getMessage());
     }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalid(InvalidRequestException ex) {
+        String code = ex.getMessage() != null ? ex.getMessage() : "invalid_request";
+        HttpStatus status = "duplicate_user".equals(code) ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST;
+        return build(status, code, null);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<?>> handleUnexpected(Exception ex) {
+        log.error("💥 Unexpected error", ex);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "internal_error", null);
+    }
+
 }

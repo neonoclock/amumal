@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
   private final UserService service;
 
-  public UserController(UserService s){ this.service = s; }
+  public UserController(UserService service){ this.service = service; }
 
   @PostMapping("/login")
   public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody LoginRequest req){
@@ -28,15 +28,17 @@ public class UserController {
   }
 
   @PatchMapping("/me")
-  public ResponseEntity<ApiResponse<Void>> updateProfile(@RequestHeader("X-User-Id") Long userId,
-                                                         @Valid @RequestBody ProfileUpdateRequest req){
+  public ResponseEntity<ApiResponse<Void>> updateProfile(
+      @RequestHeader("X-USER-ID") Long userId,
+      @Valid @RequestBody ProfileUpdateRequest req){
     service.updateProfile(userId, req);
     return ResponseEntity.ok(ApiResponse.ok(Msg.Success.PROFILE_UPDATE, null));
   }
 
   @PatchMapping("/me/password")
-  public ResponseEntity<ApiResponse<Void>> updatePassword(@RequestHeader("X-User-Id") Long userId,
-                                                          @Valid @RequestBody PasswordUpdateRequest req){
+  public ResponseEntity<ApiResponse<Void>> updatePassword(
+      @RequestHeader("X-USER-ID") Long userId,
+      @Valid @RequestBody PasswordUpdateRequest req){
     service.updatePassword(userId, req);
     return ResponseEntity.ok(ApiResponse.ok(Msg.Success.PASSWORD_UPDATE, null));
   }
