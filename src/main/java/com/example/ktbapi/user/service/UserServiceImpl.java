@@ -12,6 +12,7 @@ import com.example.ktbapi.user.dto.SignupRequest;
 import com.example.ktbapi.user.model.User;
 import com.example.ktbapi.user.repo.UserRepository;
 import org.springframework.stereotype.Service;
+import com.example.ktbapi.common.auth.RequireUserId;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -46,32 +47,26 @@ public class UserServiceImpl implements UserService {
   }
 
 
+  @RequireUserId(paramIndex = 0)
   @Override
   public void updateProfile(Long userId, ProfileUpdateRequest req) {
-    if (userId == null) throw new UnauthorizedException();
-
-    User u = repo.findById(userId).orElseThrow(NotFoundException::new);
-
-    u.changeNickname(req.nickname);
-    repo.save(u);
+      var u = repo.findById(userId).orElseThrow(NotFoundException::new);
+      u.changeNickname(req.nickname);
+      repo.save(u);
   }
 
+  @RequireUserId(paramIndex = 0)
   @Override
   public void updatePassword(Long userId, PasswordUpdateRequest req) {
-    if (userId == null) throw new UnauthorizedException();
-
-    User u = repo.findById(userId).orElseThrow(NotFoundException::new);
-
-    if (!u.getPassword().equals(req.current_password)) {
-      throw new UnauthorizedException();
-    }
-
-    u.changePassword(req.new_password);
-    repo.save(u);
+      var u = repo.findById(userId).orElseThrow(NotFoundException::new);
+      if (!u.getPassword().equals(req.current_password)) throw new UnauthorizedException();
+      u.changePassword(req.new_password);
+      repo.save(u);
   }
 
+  @RequireUserId(paramIndex = 0)
   @Override
   public void deleteUser(Long userId) {
-    repo.deleteById(userId);
+      repo.deleteById(userId);
   }
 }

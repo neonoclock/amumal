@@ -2,7 +2,6 @@ package com.example.ktbapi.post.service;
 
 import com.example.ktbapi.common.TimeUtil;
 import com.example.ktbapi.common.exception.PostNotFoundException;
-import com.example.ktbapi.common.exception.UnauthorizedException;
 import com.example.ktbapi.post.api.PostSortKey;
 import com.example.ktbapi.post.dto.*;
 import com.example.ktbapi.post.mapper.PostMapper;
@@ -10,6 +9,8 @@ import com.example.ktbapi.post.model.Post;
 import com.example.ktbapi.post.repo.CommentRepository;
 import com.example.ktbapi.post.repo.PostRepository;
 import org.springframework.stereotype.Service;
+import com.example.ktbapi.common.auth.RequireUserId;
+
 
 import java.util.List;
 
@@ -45,35 +46,21 @@ public class PostServiceImpl implements PostService {
         return PostMapper.toDetail(post, commentRepo.findAllByPostId(id));
     }
 
+    @RequireUserId(paramIndex = 0)
     @Override
     public PostDetailResponse createPost(Long userId, String authorName, PostCreateRequest req) {
-        if (userId == null) throw new UnauthorizedException();
-
         String now = TimeUtil.nowText();
-        Post saved = postRepo.save(new Post(
-                null, req.title, req.content, authorName,
-                req.image_url, now, 0, 0
-        ));
+        Post saved = postRepo.save(new Post(null, req.title, req.content, authorName, req.image_url, now, 0, 0));
         return PostMapper.toDetail(saved, List.of());
     }
 
+    @RequireUserId(paramIndex = 0)
     @Override
     public PostUpdatedResponse updatePost(Long userId, Long postId, PostUpdateRequest req) {
-        if (userId == null) throw new UnauthorizedException();
-
-        Post post = postRepo.findById(postId)
-                .orElseThrow(() -> new PostNotFoundException(postId));
-
+        Post post = postRepo.findById(postId).orElseThrow(() -> new PostNotFoundException(postId));
         post.updateDetails(req.title, req.content, req.image_url);
         postRepo.save(post);
-
-        return new PostUpdatedResponse(
-                post.getId(),
-                post.getTitle(),
-                post.getContent(),
-                post.getImageUrl(),
-                TimeUtil.nowText()
-        );
+        return new PostUpdatedResponse(post.getId(), post.getTitle(), post.getContent(), post.getImageUrl(), TimeUtil.nowText());
     }
 }
 

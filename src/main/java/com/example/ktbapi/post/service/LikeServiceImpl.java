@@ -3,12 +3,13 @@ package com.example.ktbapi.post.service;
 import com.example.ktbapi.common.exception.AlreadyLikedException;
 import com.example.ktbapi.common.exception.NotLikedException;
 import com.example.ktbapi.common.exception.PostNotFoundException;
-import com.example.ktbapi.common.exception.UnauthorizedException;
 import com.example.ktbapi.post.dto.LikeCountResponse;
 import com.example.ktbapi.post.dto.LikeStatusResponse;
 import com.example.ktbapi.post.repo.LikeRepository;
 import com.example.ktbapi.post.repo.PostRepository;
 import org.springframework.stereotype.Service;
+import com.example.ktbapi.common.auth.RequireUserId;
+
 
 @Service
 public class LikeServiceImpl implements LikeService {
@@ -21,26 +22,21 @@ public class LikeServiceImpl implements LikeService {
         this.likeRepo = likeRepo;
     }
 
+    @RequireUserId(paramIndex = 0)
     @Override
     public LikeStatusResponse like(Long userId, Long postId) {
-        if (userId == null) throw new UnauthorizedException();
         postRepo.findById(postId).orElseThrow(() -> new PostNotFoundException(postId));
-
         if (likeRepo.hasLiked(userId, postId)) throw new AlreadyLikedException();
-
         likeRepo.addLike(userId, postId);
         long count = likeRepo.countLikes(postId);
-
         return new LikeStatusResponse(postId, count, true);
     }
 
+    @RequireUserId(paramIndex = 0)
     @Override
     public LikeStatusResponse unlike(Long userId, Long postId) {
-        if (userId == null) throw new UnauthorizedException();
         postRepo.findById(postId).orElseThrow(() -> new PostNotFoundException(postId));
-
         if (!likeRepo.hasLiked(userId, postId)) throw new NotLikedException();
-
         likeRepo.removeLike(userId, postId);
         long count = likeRepo.countLikes(postId);
         return new LikeStatusResponse(postId, count, false);
