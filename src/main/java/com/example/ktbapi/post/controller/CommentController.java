@@ -25,7 +25,8 @@ public class CommentController {
                                  @RequestHeader(value = "X-USER-ID", required = false) Long userId,
                                  @RequestHeader(value = "X-USER-NAME", required = false) String authorName,
                                  @Valid @RequestBody CommentCreateOrUpdateRequest req) {
-        CommentResponse data = commentService.create(userId, postId, authorName, req);
+
+        CommentResponse data = commentService.createComment(userId, postId, authorName, req);
         return ApiResponse.ok(Msg.Success.COMMENT_CREATE, data);
     }
 
@@ -34,7 +35,8 @@ public class CommentController {
                                  @PathVariable Long commentId,
                                  @RequestHeader(value = "X-USER-ID", required = false) Long userId,
                                  @Valid @RequestBody CommentCreateOrUpdateRequest req) {
-        CommentUpdatedResponse data = commentService.update(userId, postId, commentId, req);
+
+        CommentUpdatedResponse data = commentService.updateComment(userId, postId, commentId, req);
         return ApiResponse.ok(Msg.Success.COMMENT_UPDATE, data);
     }
 
@@ -42,7 +44,8 @@ public class CommentController {
     public ApiResponse<?> delete(@PathVariable Long postId,
                                  @PathVariable Long commentId,
                                  @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
-        commentService.delete(userId, postId, commentId);
+
+        commentService.deleteComment(userId, postId, commentId);
         return ApiResponse.ok(Msg.Success.COMMENT_DELETE, new IdResponse(commentId));
     }
 }
