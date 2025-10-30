@@ -18,23 +18,29 @@ public class LikeController {
     }
 
     @PostMapping
-    public ApiResponse<?> add(@PathVariable Long postId,
-                              @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
-        LikeCountResponse data = likeService.add(userId, postId);
+    public ApiResponse<LikeStatusResponse> like(@PathVariable Long postId,
+                                                @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
+        LikeStatusResponse data = likeService.like(userId, postId);
         return ApiResponse.ok(Msg.Success.LIKE_ADD, data);
     }
 
     @DeleteMapping
-    public ApiResponse<?> remove(@PathVariable Long postId,
-                                 @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
-        LikeCountResponse data = likeService.remove(userId, postId);
+    public ApiResponse<LikeStatusResponse> unlike(@PathVariable Long postId,
+                                                  @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
+        LikeStatusResponse data = likeService.unlike(userId, postId);
         return ApiResponse.ok(Msg.Success.LIKE_REMOVE, data);
     }
 
     @GetMapping
-    public ApiResponse<?> status(@PathVariable Long postId,
-                                 @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
-        LikeStatusResponse data = likeService.status(postId, userId);
+    public ApiResponse<LikeStatusResponse> status(@PathVariable Long postId,
+                                                  @RequestHeader(value = "X-USER-ID", required = false) Long userId) {
+        LikeStatusResponse data = likeService.status(userId, postId);
         return ApiResponse.ok(Msg.Success.LIKE_STATUS, data);
+    }
+
+    @GetMapping("/count")
+    public ApiResponse<LikeCountResponse> count(@PathVariable Long postId) {
+        LikeCountResponse data = likeService.count(postId);
+        return ApiResponse.ok(Msg.Success.LIKE_COUNT, data);
     }
 }

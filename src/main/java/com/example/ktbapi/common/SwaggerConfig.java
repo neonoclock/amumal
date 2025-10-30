@@ -12,8 +12,8 @@ public class SwaggerConfig {
     public OpenAPI apiInfo() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("KTB API 문서")
-                        .description("4주차 과제용 Swagger UI API 문서입니다.")
+                        .title("아무말 대잔치 API 문서")
+                        .description("아무말 대잔치 API 문서입니다.")
                         .version("1.0.0"));
     }
 }

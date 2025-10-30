@@ -17,6 +17,7 @@ public final class Msg {
         public static final String LIKE_ADD          = "like_add_success";
         public static final String LIKE_REMOVE       = "like_remove_success";
         public static final String LIKE_STATUS       = "like_status_success";
+        public static final String LIKE_COUNT = "like_count";
 
         public static final String LOGIN             = "login_success";
         public static final String SIGNUP            = "signup_success";
