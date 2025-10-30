@@ -22,8 +22,14 @@ public class Post {
         this.likes = likes;
     }
 
-    public void increaseViews() {
+    public void increaseViewCount() {
         this.views += 1;
+    }
+
+    public void updateDetails(String newTitle, String newContent, String newImageUrl) {
+        if (newTitle != null && !newTitle.isBlank()) this.title = newTitle;
+        if (newContent != null && !newContent.isBlank()) this.content = newContent;
+        if (newImageUrl != null && !newImageUrl.isBlank()) this.imageUrl = newImageUrl;
     }
 
     public Long getId() { return id; }

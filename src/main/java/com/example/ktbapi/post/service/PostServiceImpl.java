@@ -41,6 +41,7 @@ public class PostServiceImpl implements PostService {
     public PostDetailResponse getPostById(Long id) {
         Post post = postRepo.increaseViewsById(id)
                 .orElseThrow(() -> new PostNotFoundException(id));
+
         return PostMapper.toDetail(post, commentRepo.findAllByPostId(id));
     }
 
@@ -63,21 +64,16 @@ public class PostServiceImpl implements PostService {
         Post post = postRepo.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException(postId));
 
-        Post patched = new Post(
-                post.getId(),
-                req.title,
-                req.content,
-                post.getAuthor(),
-                (req.image_url != null ? req.image_url : post.getImageUrl()),
-                post.getCreatedAt(),
-                post.getViews(),
-                post.getLikes()
-        );
-        postRepo.save(patched);
+        post.updateDetails(req.title, req.content, req.image_url);
+        postRepo.save(post);
 
         return new PostUpdatedResponse(
-                patched.getId(), patched.getTitle(), patched.getContent(),
-                patched.getImageUrl(), TimeUtil.nowText()
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                post.getImageUrl(),
+                TimeUtil.nowText()
         );
     }
 }
+
